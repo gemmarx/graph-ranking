@@ -196,7 +196,7 @@ equivClass <- function(uptri, p) {
         m <- L(tag)
         if(1==m) return(pack.v.in.edge(n, r))
         stay <- rep(0, m); names(stay) <- tag
-        y <- sample(id, r, prob=prob)
+        y <- sample(id, r, prob=weight)
         for(x in y) {stay[x] <- 1+ stay[x]}
         adjust.v(stay)
     }
