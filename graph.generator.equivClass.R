@@ -150,9 +150,6 @@ check.link <- function(lk) {
 
 
 equivClass <- function(uptri, p) {
-    cast.able <- function(r) r <= lwc(as.logical(bond))
-    pack.v.in.edge <- function(n, r) c(rep(TRUE, r), rep(FALSE, n-r))
-
     reset <- function(eq) {
         id <<- eq$id
         tag <<- eq$tag
