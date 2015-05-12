@@ -159,6 +159,7 @@ equivClass <- function(uptri, p) {
         room <<- eq$room
         chain <<- eq$chain
         bond <<- eq$bond
+        weight <<- eq$weight
         n <<- eq$params$n
     }
 
@@ -195,8 +196,6 @@ equivClass <- function(uptri, p) {
         m <- L(tag)
         if(1==m) return(pack.v.in.edge(n, r))
         stay <- rep(0, m); names(stay) <- tag
-        prob <- max(bond)*room[id] + bond
-        prob[1>bond] <- 0
         y <- sample(id, r, prob=prob)
         for(x in y) {stay[x] <- 1+ stay[x]}
         adjust.v(stay)
@@ -229,6 +228,9 @@ equivClass <- function(uptri, p) {
         room[id[i]] <- 1 + nn0(room[id[i]])
     }
 
+    weight <- max(bond)*room[id] + bond
+    weight[1>bond] <- 0
+
     list(
         cast = cast,
         samp = samp,
@@ -241,6 +243,7 @@ equivClass <- function(uptri, p) {
         chain = chain,
         room = room,
         bond = bond,
+        weight = weight,
         matrix = uptri,
         stay = function() stay
     )
