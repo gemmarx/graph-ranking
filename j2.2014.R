@@ -35,7 +35,7 @@ init.env <- function() {
 
     node.num <- turnout
     adjac.mat <- matrix.adjacency22(node.num)
-    adjac.mat <- register.ex.edge(adjac.mat, ex.edge)
+    adjac.mat <- register.extra.edge(adjac.mat, extra.edge)
     match.chart <<- init.match.chart(adjac.mat)
 
     id <- sample(1:turnout)
@@ -125,7 +125,7 @@ mat[22,c(7,10,11,16,18)] <- 1
     mat
 }
 
-ex.edge <- t(matrix(c(
+extra.edge <- t(matrix(c(
     1,8,
     2,11,
     3,14,
@@ -152,7 +152,7 @@ init.record.mother <- function(record) {
     }), turnout))
 }
 
-register.ex.edge <- function(mat, edges) {
+register.extra.edge <- function(mat, edges) {
     apply(edges, 1, function(y){
         i <- y[1]; j <- y[2]
         mat[i,j] <<- mat[j,i] <<- 1
@@ -252,7 +252,7 @@ init.env()
 # calculation of scores
 record <- take.match.record(record.mother, match.shuffle)
 y <- dist.ratio <- make.dist.ratio(record, local.standardization)
-iter <- 0; err <- NULL
+iter <- 0; err <- Inf
 for (iter in 1:max.iteration) {
     y.prev <- y
     y <- update.score(dist.ratio, y, FALSE)
