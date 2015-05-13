@@ -10,7 +10,7 @@
 ####
 ## Parameters
 max.iteration <- 500
-fix.limit <- 10 * .Machine$double.eps
+fix.limit <- sqrt(.Machine$double.eps)
 
 turnout <- 22
 point.per.head <- 10
@@ -18,6 +18,8 @@ point.per.head <- 10
 weight.winner <- 3
 weight.loser <- 1/3
 weight.drawer <- 1
+
+local.standardization <- FALSE
 
 # magic numbers of symbol
 radix <- 4
@@ -38,6 +40,9 @@ init.env <- function() {
 
     id <- sample(1:turnout)
     match.shuffle <<- match.chart[id, id]
+
+    if(!local.standardization) losers.upper <<- weight.loser
+    else losers.upper <<- get.losers.upper(adjac.mat)
 }
 
 
@@ -156,6 +161,12 @@ register.ex.edge <- function(mat, edges) {
     mat
 }
 
+get.losers.upper <- function(adjac) {
+    nmatch <- length(which(1==adjac))
+    wld <- weight.winner + weight.loser + weight.drawer
+    3*(turnout*weight.loser)/(nmatch*wld)
+}
+
 init.match.chart <- function(adjac) {
     host.game <- function(host) {
         for(i in 1:turnout) {
@@ -194,23 +205,41 @@ take.match.record <- function(record.base, matches) {
     record
 }
 
-make.dist.ratio <- function(record) {
-    diag(record) <- d
+make.dist.ratio <- function(record, std11n=FALSE) {
     w <- matrix(0,turnout,turnout)
     w[record==l] <- weight.winner
     w[record==u] <- weight.loser
     w[record==d] <- weight.drawer
+    if(std11n) w <- apply(w,2, function(x){x/sum(x)})
 
-    apply(w,2, function(x){x/sum(x)})
+    w
 }
 
-get.score <- function(x){apply(x,1,sum)}
+get.score <- function(x){
+    s <- apply(x,1,sum)
+    s*length(s)/sum(s)
+}
 
 update.score <- function(ratio, dist.prev, will.show=TRUE) {
     score <- get.score(dist.prev)
     if(will.show==TRUE) pp(score)
 
     ratio %*% diag(score)
+}
+
+give.loser.bound <- function(record, dist.score) {
+    loc <- u==record
+    dist.lose <- matrix(0,turnout,turnout)
+    dist.lose[loc] <- dist.score[loc]
+    lose.sum <- apply(dist.lose, 2, sum)
+    bound.sum <- losers.upper*apply(loc, 2, sum)
+    for(i in 1:turnout) {
+        if(bound.sum[i]>lose.sum[i]) next
+        dist.score[loc[,i],i] <- losers.upper
+        dist.score[i,i] <- lose.sum[i]-bound.sum[i]
+    }
+
+    dist.score
 }
 
 pp <- function(x,r=2){print(round(x,r))}
@@ -222,11 +251,12 @@ init.env()
 
 # calculation of scores
 record <- take.match.record(record.mother, match.shuffle)
-y <- dist.ratio <- make.dist.ratio(record)
+y <- dist.ratio <- make.dist.ratio(record, local.standardization)
 iter <- 0; err <- NULL
 for (iter in 1:max.iteration) {
     y.prev <- y
     y <- update.score(dist.ratio, y, FALSE)
+    y <- give.loser.bound(record, y)
     err <- max(abs(y - y.prev))
     if(err<fix.limit) break
 }
@@ -242,16 +272,16 @@ s.f <- cbind(score, t(fact))
 s.f <- s.f[rev(order(s.f[,1])),]
 
 pvalue <- rep(0, turnout)
-for(i in 2:turnout){
-    val <- fisher.test(s.f[c(i-1,i), -1])
-    vp <- round(100*val$p.value, 0)
-    pvalue[i] <- ifelse(100==vp, 99, vp)
+for(i in 1:(turnout-1)){
+    val <- fisher.test(s.f[c(i,1+i), -1])
+    pvalue[i] <- round(100*(1-val$p.value), 0)
 }
 s.f.p <- cbind(s.f, pvalue)
 
 # ranking
-colnames(s.f.p) <- c("評価点", "勝", "分", "負", "p[%]")
+colnames(s.f.p) <- c("評価点", "勝", "分", "負", "有意差%")
 pp(s.f.p)
+#pp(10*y, 2)
 
 # conditions
 cat(sprintf("iteration: %d    error: %.2e\n", iter, err))
