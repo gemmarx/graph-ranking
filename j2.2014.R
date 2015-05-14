@@ -188,7 +188,7 @@ init.match.chart <- function(adjac) {
         TRUE
     }
 
-    match.chart <<- matrix(0,turnout,turnout)
+    match.chart <- matrix(0,turnout,turnout)
     for(i in 1:turnout) host.game(i)
     
     match.chart
@@ -229,14 +229,14 @@ update.score <- function(ratio, dist.prev, will.show=TRUE) {
 
 give.loser.bound <- function(record, dist.score) {
     loc <- u==record
-    dist.lose <- matrix(0,turnout,turnout)
-    dist.lose[loc] <- dist.score[loc]
-    lose.sum <- apply(dist.lose, 2, sum)
-    bound.sum <- losers.upper*apply(loc, 2, sum)
+    dist.loser <- matrix(0,turnout,turnout)
+    dist.loser[loc] <- dist.score[loc]
+    loser.sum <- apply(dist.loser, 2, sum)
+    bound.sum <- losers.upper * apply(loc, 2, sum)
     for(i in 1:turnout) {
-        if(bound.sum[i]>lose.sum[i]) next
+        if(bound.sum[i]>loser.sum[i]) next
         dist.score[loc[,i],i] <- losers.upper
-        dist.score[i,i] <- lose.sum[i]-bound.sum[i]
+        dist.score[i,i] <- loser.sum[i] - bound.sum[i]
     }
 
     dist.score
